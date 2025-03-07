@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Dumbbell, Timer, Activity, Heart, Award, ArrowRight } from 'lucide-react';
 import Header from '@/components/layout/Header';
@@ -135,9 +135,47 @@ const progressSteps = [
 
 const Fitness: React.FC = () => {
   const { toast } = useToast();
-  const [currentLevel, setCurrentLevel] = React.useState('beginner');
+  const [currentLevel, setCurrentLevel] = useState('beginner');
+  const [showGeneratedProgram, setShowGeneratedProgram] = useState(false);
+  const [generatedProgram, setGeneratedProgram] = useState<any[]>([]);
+  
+  const generateRandomWorkout = (level: string) => {
+    // Sélectionner aléatoirement des exercices du niveau approprié
+    const levelWorkouts = workoutPlans[level as keyof typeof workoutPlans];
+    
+    // Créer un programme hebdomadaire (3-5 séances selon le niveau)
+    const sessionsPerWeek = level === 'beginner' ? 3 : level === 'intermediate' ? 4 : 5;
+    
+    // Générer le programme avec variations
+    const program = [];
+    for (let i = 0; i < sessionsPerWeek; i++) {
+      // Sélectionner un workout aléatoire comme base
+      const baseWorkout = {...levelWorkouts[Math.floor(Math.random() * levelWorkouts.length)]};
+      
+      // Ajouter des variations pour rendre le programme unique
+      program.push({
+        ...baseWorkout,
+        title: `Séance ${i+1}: ${baseWorkout.title}`,
+        day: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'][i % 7],
+        exercises: baseWorkout.exercises.map(ex => ({
+          ...ex,
+          reps: typeof ex.reps === 'string' && ex.reps.includes('×') 
+            ? ex.reps  // Conserver le format pour les séries
+            : typeof ex.reps === 'string' && ex.reps.includes('min')
+              ? `${parseInt(ex.reps) + (Math.random() > 0.5 ? 1 : -1)} min`  // Varier légèrement le temps
+              : ex.reps  // Conserver les autres formats
+        }))
+      });
+    }
+    
+    return program;
+  };
 
   const handleGenerateWorkout = () => {
+    const program = generateRandomWorkout(currentLevel);
+    setGeneratedProgram(program);
+    setShowGeneratedProgram(true);
+    
     toast({
       title: "Programme d'entraînement généré",
       description: "Votre programme personnalisé a été créé selon votre profil.",
@@ -171,6 +209,24 @@ const Fitness: React.FC = () => {
                 <p className="text-foreground/70 mb-4">
                   Générez un programme d'entraînement adapté à votre niveau et à vos objectifs.
                 </p>
+                <div className="mb-4">
+                  <h4 className="font-medium mb-2">Sélectionnez votre niveau :</h4>
+                  <div className="flex space-x-4">
+                    {['beginner', 'intermediate', 'advanced'].map((level) => (
+                      <button
+                        key={level}
+                        onClick={() => setCurrentLevel(level)}
+                        className={`px-4 py-2 rounded-md ${
+                          currentLevel === level 
+                            ? 'bg-fitness text-white' 
+                            : 'bg-secondary hover:bg-fitness/20'
+                        }`}
+                      >
+                        {level === 'beginner' ? 'Débutant' : level === 'intermediate' ? 'Intermédiaire' : 'Avancé'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
               <div>
                 <Button onClick={handleGenerateWorkout} className="px-6">
@@ -181,6 +237,52 @@ const Fitness: React.FC = () => {
             </div>
           </GlassCard>
         </div>
+
+        {showGeneratedProgram && generatedProgram.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-semibold mb-6">Votre programme personnalisé</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {generatedProgram.map((workout, index) => (
+                <GlassCard key={index} className="p-6 hover-lift">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-2 bg-fitness/10 rounded-full">
+                      <Dumbbell className="w-6 h-6 text-fitness" />
+                    </div>
+                    <div className="flex items-center text-sm text-foreground/70">
+                      <Timer className="w-4 h-4 mr-1" />
+                      <span>{workout.duration}</span>
+                    </div>
+                  </div>
+                  
+                  <h3 className="text-xl font-medium mb-1">{workout.title}</h3>
+                  <p className="text-sm text-fitness font-medium mb-2">{workout.day}</p>
+                  <p className="text-foreground/70 mb-4">{workout.description}</p>
+                  
+                  <div className="flex gap-3 mb-4">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-foreground/70">
+                      {workout.focus}
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-foreground/70">
+                      Intensité: {workout.intensity}
+                    </span>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <h4 className="font-medium mb-2">Exercices:</h4>
+                    <ul className="space-y-2">
+                      {workout.exercises.map((exercise: any, idx: number) => (
+                        <li key={idx} className="flex justify-between text-sm border-b border-border/50 pb-2 last:border-0">
+                          <span>{exercise.name}</span>
+                          <span className="text-foreground/70">{exercise.reps}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </GlassCard>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mb-12">
           <h2 className="text-2xl font-semibold mb-6">Exemples de programmes</h2>
