@@ -1,12 +1,26 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Dumbbell, Timer, Activity, Heart, Award, ArrowRight } from 'lucide-react';
+import { Dumbbell, Timer, Activity, Heart, Award, ArrowRight, Calendar, PlusCircle, Trash2, BarChart } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import GlassCard from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+
+// Types for workout activities
+interface WorkoutActivity {
+  id: string;
+  date: string;
+  type: string;
+  duration: number;
+  intensity: 'Légère' | 'Modérée' | 'Intense';
+  notes: string;
+}
 
 const workoutPlans = {
   beginner: [
@@ -139,6 +153,31 @@ const Fitness: React.FC = () => {
   const [showGeneratedProgram, setShowGeneratedProgram] = useState(false);
   const [generatedProgram, setGeneratedProgram] = useState<any[]>([]);
   
+  // État pour le formulaire d'activité
+  const [newActivity, setNewActivity] = useState<Omit<WorkoutActivity, 'id'>>({
+    date: new Date().toISOString().split('T')[0],
+    type: 'Course',
+    duration: 30,
+    intensity: 'Modérée',
+    notes: ''
+  });
+  
+  // État pour la liste des activités
+  const [activities, setActivities] = useState<WorkoutActivity[]>([]);
+  
+  // Charger les activités depuis le localStorage au chargement
+  useEffect(() => {
+    const savedActivities = localStorage.getItem('workoutActivities');
+    if (savedActivities) {
+      setActivities(JSON.parse(savedActivities));
+    }
+  }, []);
+  
+  // Sauvegarder les activités dans le localStorage quand elles changent
+  useEffect(() => {
+    localStorage.setItem('workoutActivities', JSON.stringify(activities));
+  }, [activities]);
+  
   const generateRandomWorkout = (level: string) => {
     // Sélectionner aléatoirement des exercices du niveau approprié
     const levelWorkouts = workoutPlans[level as keyof typeof workoutPlans];
@@ -181,6 +220,53 @@ const Fitness: React.FC = () => {
       description: "Votre programme personnalisé a été créé selon votre profil.",
     });
   };
+  
+  // Ajouter une nouvelle activité
+  const handleAddActivity = () => {
+    const newActivityWithId: WorkoutActivity = {
+      ...newActivity,
+      id: Date.now().toString()
+    };
+    
+    setActivities([newActivityWithId, ...activities]);
+    
+    // Réinitialiser le formulaire
+    setNewActivity({
+      date: new Date().toISOString().split('T')[0],
+      type: 'Course',
+      duration: 30,
+      intensity: 'Modérée',
+      notes: ''
+    });
+    
+    toast({
+      title: "Activité ajoutée",
+      description: "Votre séance d'entraînement a été enregistrée avec succès.",
+    });
+  };
+  
+  // Supprimer une activité
+  const handleDeleteActivity = (id: string) => {
+    setActivities(activities.filter(activity => activity.id !== id));
+    
+    toast({
+      title: "Activité supprimée",
+      description: "La séance d'entraînement a été supprimée.",
+    });
+  };
+  
+  // Calculer des statistiques
+  const calculateStats = () => {
+    if (activities.length === 0) return { totalSessions: 0, totalDuration: 0, avgDuration: 0 };
+    
+    const totalSessions = activities.length;
+    const totalDuration = activities.reduce((sum, activity) => sum + activity.duration, 0);
+    const avgDuration = Math.round(totalDuration / totalSessions);
+    
+    return { totalSessions, totalDuration, avgDuration };
+  };
+  
+  const stats = calculateStats();
 
   return (
     <motion.div
@@ -283,6 +369,188 @@ const Fitness: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Nouvelle section: Suivi des activités */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-semibold">Suivi de vos séances d'entraînement</h2>
+            <div className="p-2 bg-fitness/10 rounded-full">
+              <Activity className="w-6 h-6 text-fitness" />
+            </div>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Carte d'ajout d'activité */}
+            <GlassCard intensity="medium" className="p-6 col-span-1">
+              <h3 className="text-xl font-semibold mb-4">Ajouter une séance</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="date">Date</Label>
+                  <Input 
+                    id="date" 
+                    type="date" 
+                    value={newActivity.date}
+                    onChange={(e) => setNewActivity({...newActivity, date: e.target.value})}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="type">Type d'exercice</Label>
+                  <Select 
+                    value={newActivity.type}
+                    onValueChange={(value) => setNewActivity({...newActivity, type: value})}
+                  >
+                    <SelectTrigger id="type">
+                      <SelectValue placeholder="Sélectionner un type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Course">Course</SelectItem>
+                      <SelectItem value="Musculation">Musculation</SelectItem>
+                      <SelectItem value="Natation">Natation</SelectItem>
+                      <SelectItem value="Vélo">Vélo</SelectItem>
+                      <SelectItem value="Yoga">Yoga</SelectItem>
+                      <SelectItem value="HIIT">HIIT</SelectItem>
+                      <SelectItem value="Autre">Autre</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="duration">Durée (minutes)</Label>
+                  <Input 
+                    id="duration" 
+                    type="number" 
+                    min="1"
+                    value={newActivity.duration}
+                    onChange={(e) => setNewActivity({...newActivity, duration: parseInt(e.target.value) || 0})}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="intensity">Intensité</Label>
+                  <Select 
+                    value={newActivity.intensity}
+                    onValueChange={(value: 'Légère' | 'Modérée' | 'Intense') => setNewActivity({...newActivity, intensity: value})}
+                  >
+                    <SelectTrigger id="intensity">
+                      <SelectValue placeholder="Sélectionner l'intensité" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Légère">Légère</SelectItem>
+                      <SelectItem value="Modérée">Modérée</SelectItem>
+                      <SelectItem value="Intense">Intense</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea 
+                    id="notes" 
+                    placeholder="Notez vos impressions, performances..."
+                    value={newActivity.notes}
+                    onChange={(e) => setNewActivity({...newActivity, notes: e.target.value})}
+                  />
+                </div>
+                
+                <Button 
+                  className="w-full" 
+                  onClick={handleAddActivity}
+                >
+                  <PlusCircle className="w-4 h-4 mr-2" />
+                  Enregistrer cette séance
+                </Button>
+              </div>
+            </GlassCard>
+            
+            {/* Carte des statistiques */}
+            <GlassCard intensity="light" className="p-6 col-span-1">
+              <h3 className="text-xl font-semibold mb-4">Vos statistiques</h3>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg">
+                  <div className="flex items-center">
+                    <Calendar className="w-5 h-5 mr-3 text-fitness" />
+                    <span>Nombre de séances</span>
+                  </div>
+                  <span className="text-xl font-bold">{stats.totalSessions}</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg">
+                  <div className="flex items-center">
+                    <Timer className="w-5 h-5 mr-3 text-fitness" />
+                    <span>Temps total d'entraînement</span>
+                  </div>
+                  <span className="text-xl font-bold">{stats.totalDuration} min</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg">
+                  <div className="flex items-center">
+                    <BarChart className="w-5 h-5 mr-3 text-fitness" />
+                    <span>Durée moyenne par séance</span>
+                  </div>
+                  <span className="text-xl font-bold">{stats.avgDuration} min</span>
+                </div>
+              </div>
+              
+              <div className="mt-6 text-center">
+                <p className="text-foreground/70 text-sm">
+                  Continuez à enregistrer vos séances pour voir votre progression !
+                </p>
+              </div>
+            </GlassCard>
+            
+            {/* Historique des activités */}
+            <GlassCard intensity="light" className="p-6 col-span-1 md:row-span-1">
+              <h3 className="text-xl font-semibold mb-4">Historique récent</h3>
+              
+              {activities.length === 0 ? (
+                <div className="text-center py-8 text-foreground/70">
+                  <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>Aucune séance enregistrée</p>
+                  <p className="text-sm mt-2">Commencez à ajouter vos séances d'entraînement</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                  {activities.slice(0, 5).map((activity) => (
+                    <div key={activity.id} className="flex items-start justify-between p-3 bg-background/50 rounded-lg border border-border/50">
+                      <div>
+                        <div className="flex items-center">
+                          <span className="font-medium">{activity.type}</span>
+                          <span className="mx-2 text-foreground/50">•</span>
+                          <span className="text-sm text-foreground/70">{new Date(activity.date).toLocaleDateString()}</span>
+                        </div>
+                        <div className="mt-1 flex items-center text-sm text-foreground/70">
+                          <Timer className="w-3 h-3 mr-1" />
+                          <span>{activity.duration} min</span>
+                          <span className="mx-2">•</span>
+                          <span>Intensité: {activity.intensity}</span>
+                        </div>
+                        {activity.notes && (
+                          <p className="mt-2 text-sm text-foreground/70 italic line-clamp-2">{activity.notes}</p>
+                        )}
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteActivity(activity.id)}
+                        className="text-destructive/70 hover:text-destructive p-1"
+                        aria-label="Supprimer cette activité"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {activities.length > 5 && (
+                    <p className="text-center text-sm text-foreground/70 pt-2">
+                      +{activities.length - 5} autres séances
+                    </p>
+                  )}
+                </div>
+              )}
+            </GlassCard>
+          </div>
+        </div>
 
         <div className="mb-12">
           <h2 className="text-2xl font-semibold mb-6">Exemples de programmes</h2>
