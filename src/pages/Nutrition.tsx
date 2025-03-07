@@ -14,7 +14,7 @@ const menus = {
     {
       type: 'breakfast',
       title: 'Petit déjeuner énergisant',
-      description: 'Bol de flocons d'avoine avec fruits rouges de saison, noix et miel',
+      description: 'Bol de flocons d\'avoine avec fruits rouges de saison, noix et miel',
       calories: 380,
       protein: 12,
       carbs: 45,
@@ -52,7 +52,7 @@ const menus = {
     {
       type: 'breakfast',
       title: 'Petit déjeuner rafraîchissant',
-      description: 'Smoothie bowl aux fruits d'été, graines de chia et granola maison',
+      description: 'Smoothie bowl aux fruits d\'été, graines de chia et granola maison',
       calories: 360,
       protein: 10,
       carbs: 48,
@@ -79,7 +79,7 @@ const menus = {
     {
       type: 'snack',
       title: 'Collation fraîche',
-      description: 'Brochettes de fruits d'été et une poignée d'amandes',
+      description: 'Brochettes de fruits d\'été et une poignée d\'amandes',
       calories: 170,
       protein: 6,
       carbs: 18,
@@ -117,7 +117,7 @@ const menus = {
     {
       type: 'snack',
       title: 'Collation automnale',
-      description: 'Compote de pommes maison et biscuit aux flocons d'avoine',
+      description: 'Compote de pommes maison et biscuit aux flocons d\'avoine',
       calories: 190,
       protein: 4,
       carbs: 26,
@@ -146,7 +146,7 @@ const menus = {
     {
       type: 'dinner',
       title: 'Dîner fortifiant',
-      description: 'Ragoût de poulet aux légumes d'hiver et boulgour',
+      description: 'Ragoût de poulet aux légumes d\'hiver et boulgour',
       calories: 470,
       protein: 34,
       carbs: 36,
