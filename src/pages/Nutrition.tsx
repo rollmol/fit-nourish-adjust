@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Leaf, Calendar, UtensilsCrossed, Apple, ChefHat } from 'lucide-react';
@@ -190,6 +191,8 @@ const Nutrition: React.FC = () => {
       const baseMenu = menus[currentSeason as keyof typeof menus];
       const generatedMenu = baseMenu.map(meal => ({
         ...meal,
+        // Ensure we're preserving the correct type value
+        type: meal.type as 'breakfast' | 'lunch' | 'dinner' | 'snack',
         title: `${meal.title} personnalisé`,
         calories: Math.round(meal.calories * (0.9 + Math.random() * 0.2)), // Variation de ±10%
         protein: Math.round(meal.protein * (0.9 + Math.random() * 0.2)),
