@@ -8,6 +8,8 @@ interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
   hoverLift?: boolean;
+  onClick?: () => void;
+  isSelected?: boolean;
 }
 
 const GlassCard: React.FC<GlassCardProps> = ({
@@ -16,6 +18,8 @@ const GlassCard: React.FC<GlassCardProps> = ({
   hoverLift = false,
   className,
   children,
+  onClick,
+  isSelected = false,
   ...props
 }) => {
   return (
@@ -27,8 +31,11 @@ const GlassCard: React.FC<GlassCardProps> = ({
         intensity === 'intense' && 'bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-white/30 dark:border-slate-800/60',
         hoverEffect && 'transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1',
         hoverLift && 'transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 hover:border-fitness/50',
+        onClick && 'cursor-pointer',
+        isSelected && 'border-2 border-fitness shadow-lg shadow-fitness/10',
         className
       )}
+      onClick={onClick}
       {...props}
     >
       {children}

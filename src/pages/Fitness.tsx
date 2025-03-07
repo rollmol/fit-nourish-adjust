@@ -1,7 +1,7 @@
-
+<lov-code>
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Dumbbell, Timer, Activity, Heart, Award, ArrowRight, Calendar, PlusCircle, Trash2, BarChart } from 'lucide-react';
+import { Dumbbell, Timer, Activity, Heart, Award, ArrowRight, Calendar, PlusCircle, Trash2, BarChart, Edit, Save, Check, X, List, CheckSquare } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import GlassCard from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,23 @@ interface WorkoutActivity {
   notes: string;
 }
 
+// Types for exercise tracking
+interface ExerciseTrackingEntry {
+  id: string;
+  date: string;
+  exerciseName: string;
+  sets: ExerciseSet[];
+  programId?: string; // To link with the generated program
+  workoutTitle?: string;
+}
+
+interface ExerciseSet {
+  reps: number;
+  weight?: number; // Optional for bodyweight exercises
+  completed: boolean;
+}
+
+// Sample workout plans
 const workoutPlans = {
   beginner: [
     {
@@ -152,6 +169,7 @@ const Fitness: React.FC = () => {
   const [currentLevel, setCurrentLevel] = useState('beginner');
   const [showGeneratedProgram, setShowGeneratedProgram] = useState(false);
   const [generatedProgram, setGeneratedProgram] = useState<any[]>([]);
+  const [selectedWorkout, setSelectedWorkout] = useState<any | null>(null);
   
   // État pour le formulaire d'activité
   const [newActivity, setNewActivity] = useState<Omit<WorkoutActivity, 'id'>>({
@@ -165,18 +183,44 @@ const Fitness: React.FC = () => {
   // État pour la liste des activités
   const [activities, setActivities] = useState<WorkoutActivity[]>([]);
   
-  // Charger les activités depuis le localStorage au chargement
+  // Nouvel état pour le suivi des exercices
+  const [exercisesTracking, setExercisesTracking] = useState<ExerciseTrackingEntry[]>([]);
+  const [currentExerciseTracking, setCurrentExerciseTracking] = useState<ExerciseTrackingEntry | null>(null);
+  const [isAddingExerciseTracking, setIsAddingExerciseTracking] = useState(false);
+  
+  // Charger les activités et le suivi des exercices depuis le localStorage au chargement
   useEffect(() => {
     const savedActivities = localStorage.getItem('workoutActivities');
     if (savedActivities) {
       setActivities(JSON.parse(savedActivities));
     }
+    
+    const savedExercisesTracking = localStorage.getItem('exercisesTracking');
+    if (savedExercisesTracking) {
+      setExercisesTracking(JSON.parse(savedExercisesTracking));
+    }
+    
+    const savedProgram = localStorage.getItem('generatedProgram');
+    if (savedProgram) {
+      setGeneratedProgram(JSON.parse(savedProgram));
+      setShowGeneratedProgram(true);
+    }
   }, []);
   
-  // Sauvegarder les activités dans le localStorage quand elles changent
+  // Sauvegarder les activités et le suivi des exercices dans le localStorage
   useEffect(() => {
     localStorage.setItem('workoutActivities', JSON.stringify(activities));
   }, [activities]);
+  
+  useEffect(() => {
+    localStorage.setItem('exercisesTracking', JSON.stringify(exercisesTracking));
+  }, [exercisesTracking]);
+  
+  useEffect(() => {
+    if (generatedProgram.length > 0) {
+      localStorage.setItem('generatedProgram', JSON.stringify(generatedProgram));
+    }
+  }, [generatedProgram]);
   
   const generateRandomWorkout = (level: string) => {
     // Sélectionner aléatoirement des exercices du niveau approprié
@@ -266,6 +310,128 @@ const Fitness: React.FC = () => {
     return { totalSessions, totalDuration, avgDuration };
   };
   
+  // Nouvelle fonction pour ouvrir le suivi d'un exercice
+  const handleSelectWorkout = (workout: any) => {
+    setSelectedWorkout(workout);
+    setIsAddingExerciseTracking(false);
+  };
+  
+  // Commencer à suivre un exercice spécifique
+  const handleTrackExercise = (exerciseName: string) => {
+    if (!selectedWorkout) return;
+    
+    const newExerciseTracking: ExerciseTrackingEntry = {
+      id: Date.now().toString(),
+      date: new Date().toISOString().split('T')[0],
+      exerciseName: exerciseName,
+      sets: Array(3).fill({ reps: 0, weight: 0, completed: false }),
+      programId: Date.now().toString(), // Utiliser un ID unique pour le programme
+      workoutTitle: selectedWorkout.title
+    };
+    
+    setCurrentExerciseTracking(newExerciseTracking);
+    setIsAddingExerciseTracking(true);
+  };
+  
+  // Modifier un set d'exercice
+  const handleSetChange = (index: number, field: 'reps' | 'weight', value: number) => {
+    if (!currentExerciseTracking) return;
+    
+    const updatedSets = [...currentExerciseTracking.sets];
+    updatedSets[index] = { 
+      ...updatedSets[index], 
+      [field]: value 
+    };
+    
+    setCurrentExerciseTracking({
+      ...currentExerciseTracking,
+      sets: updatedSets
+    });
+  };
+  
+  // Marquer un set comme complété
+  const handleSetCompleted = (index: number, completed: boolean) => {
+    if (!currentExerciseTracking) return;
+    
+    const updatedSets = [...currentExerciseTracking.sets];
+    updatedSets[index] = { 
+      ...updatedSets[index], 
+      completed
+    };
+    
+    setCurrentExerciseTracking({
+      ...currentExerciseTracking,
+      sets: updatedSets
+    });
+  };
+  
+  // Ajouter un nouveau set
+  const handleAddSet = () => {
+    if (!currentExerciseTracking) return;
+    
+    const updatedSets = [
+      ...currentExerciseTracking.sets,
+      { reps: 0, weight: 0, completed: false }
+    ];
+    
+    setCurrentExerciseTracking({
+      ...currentExerciseTracking,
+      sets: updatedSets
+    });
+  };
+  
+  // Enregistrer le suivi d'exercice
+  const handleSaveExerciseTracking = () => {
+    if (!currentExerciseTracking) return;
+    
+    // Vérifier si cet exercice a déjà été suivi aujourd'hui
+    const existingIndex = exercisesTracking.findIndex(
+      et => et.exerciseName === currentExerciseTracking.exerciseName && 
+           et.date === currentExerciseTracking.date
+    );
+    
+    if (existingIndex >= 0) {
+      // Mettre à jour l'entrée existante
+      const updatedTracking = [...exercisesTracking];
+      updatedTracking[existingIndex] = currentExerciseTracking;
+      setExercisesTracking(updatedTracking);
+    } else {
+      // Ajouter une nouvelle entrée
+      setExercisesTracking([currentExerciseTracking, ...exercisesTracking]);
+    }
+    
+    setCurrentExerciseTracking(null);
+    setIsAddingExerciseTracking(false);
+    
+    toast({
+      title: "Exercice enregistré",
+      description: "Le suivi de votre exercice a été sauvegardé avec succès.",
+    });
+  };
+  
+  // Annuler l'ajout du suivi d'exercice
+  const handleCancelExerciseTracking = () => {
+    setCurrentExerciseTracking(null);
+    setIsAddingExerciseTracking(false);
+  };
+  
+  // Supprimer un suivi d'exercice
+  const handleDeleteExerciseTracking = (id: string) => {
+    setExercisesTracking(exercisesTracking.filter(et => et.id !== id));
+    
+    toast({
+      title: "Suivi supprimé",
+      description: "Le suivi de cet exercice a été supprimé.",
+    });
+  };
+  
+  // Obtenir les suivis pour un exercice spécifique
+  const getExerciseTrackingHistory = (exerciseName: string) => {
+    return exercisesTracking
+      .filter(et => et.exerciseName === exerciseName)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  };
+  
   const stats = calculateStats();
 
   return (
@@ -329,7 +495,13 @@ const Fitness: React.FC = () => {
             <h2 className="text-2xl font-semibold mb-6">Votre programme personnalisé</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {generatedProgram.map((workout, index) => (
-                <GlassCard key={index} className="p-6 hover-lift">
+                <GlassCard 
+                  key={index} 
+                  className="p-6" 
+                  onClick={() => handleSelectWorkout(workout)}
+                  isSelected={selectedWorkout === workout}
+                  hoverLift={true}
+                >
                   <div className="flex items-start justify-between mb-4">
                     <div className="p-2 bg-fitness/10 rounded-full">
                       <Dumbbell className="w-6 h-6 text-fitness" />
@@ -364,9 +536,172 @@ const Fitness: React.FC = () => {
                       ))}
                     </ul>
                   </div>
+                  
+                  {selectedWorkout === workout && (
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (selectedWorkout) {
+                            setSelectedWorkout(null);
+                          }
+                        }}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Fermer la sélection
+                      </Button>
+                    </div>
+                  )}
                 </GlassCard>
               ))}
             </div>
+            
+            {/* Affichage du suivi de séance pour le workout sélectionné */}
+            {selectedWorkout && (
+              <div className="mt-8">
+                <GlassCard className="p-6">
+                  <h2 className="text-xl font-semibold mb-4">
+                    Suivi des exercices - {selectedWorkout.title}
+                  </h2>
+                  
+                  {isAddingExerciseTracking ? (
+                    <div className="space-y-6">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-medium">{currentExerciseTracking?.exerciseName}</h3>
+                          <p className="text-sm text-foreground/70">
+                            {new Date(currentExerciseTracking?.date || '').toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex space-x-2 mt-2 md:mt-0">
+                          <Button 
+                            size="sm"
+                            variant="outline"
+                            onClick={handleAddSet}
+                          >
+                            <PlusCircle className="w-4 h-4 mr-1" />
+                            Ajouter une série
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-background/50 rounded-lg p-4">
+                        <div className="grid grid-cols-12 font-medium text-sm mb-2">
+                          <div className="col-span-1">#</div>
+                          <div className="col-span-4">Répétitions</div>
+                          <div className="col-span-4">Poids (kg)</div>
+                          <div className="col-span-3 text-right">Terminé</div>
+                        </div>
+                        
+                        {currentExerciseTracking?.sets.map((set, index) => (
+                          <div key={index} className="grid grid-cols-12 gap-2 items-center py-2 border-b border-border/30 last:border-0">
+                            <div className="col-span-1 text-sm">{index + 1}</div>
+                            <div className="col-span-4">
+                              <Input
+                                type="number"
+                                min="0"
+                                value={set.reps || 0}
+                                onChange={(e) => handleSetChange(index, 'reps', parseInt(e.target.value) || 0)}
+                                className="h-8"
+                              />
+                            </div>
+                            <div className="col-span-4">
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.5"
+                                value={set.weight || 0}
+                                onChange={(e) => handleSetChange(index, 'weight', parseFloat(e.target.value) || 0)}
+                                className="h-8"
+                              />
+                            </div>
+                            <div className="col-span-3 text-right">
+                              <button
+                                onClick={() => handleSetCompleted(index, !set.completed)}
+                                className={`w-8 h-8 rounded-md flex items-center justify-center ${
+                                  set.completed 
+                                    ? 'bg-fitness/20 text-fitness' 
+                                    : 'bg-secondary text-foreground/70'
+                                }`}
+                              >
+                                {set.completed ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="flex justify-end space-x-3">
+                        <Button 
+                          variant="outline" 
+                          onClick={handleCancelExerciseTracking}
+                        >
+                          Annuler
+                        </Button>
+                        <Button onClick={handleSaveExerciseTracking}>
+                          <Save className="w-4 h-4 mr-2" />
+                          Enregistrer
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {selectedWorkout.exercises.map((exercise: any, index: number) => {
+                          const trackingHistory = getExerciseTrackingHistory(exercise.name);
+                          const hasHistory = trackingHistory.length > 0;
+                          const lastTracking = hasHistory ? trackingHistory[0] : null;
+                          
+                          return (
+                            <div 
+                              key={index}
+                              className="bg-background/50 p-4 rounded-lg border border-border/30"
+                            >
+                              <div className="flex justify-between items-start mb-3">
+                                <h4 className="font-medium">{exercise.name}</h4>
+                                <span className="text-sm text-foreground/70">{exercise.reps}</span>
+                              </div>
+                              
+                              {hasHistory && (
+                                <div className="mb-3 p-3 bg-fitness/5 rounded-md">
+                                  <p className="text-sm font-medium">Dernière séance:</p>
+                                  <p className="text-xs text-foreground/70 mb-2">
+                                    {new Date(lastTracking?.date || '').toLocaleDateString()}
+                                  </p>
+                                  <div className="space-y-1">
+                                    {lastTracking?.sets.map((set, idx) => (
+                                      <div key={idx} className="flex justify-between text-xs">
+                                        <span>Série {idx + 1}:</span>
+                                        <span className={set.completed ? 'text-fitness' : 'text-foreground/50'}>
+                                          {set.reps} reps {set.weight ? `× ${set.weight} kg` : ''}
+                                          {set.completed ? ' ✓' : ''}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="w-full"
+                                onClick={() => handleTrackExercise(exercise.name)}
+                              >
+                                <Edit className="w-4 h-4 mr-1" />
+                                {hasHistory ? 'Mettre à jour' : 'Commencer le suivi'}
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </GlassCard>
+              </div>
+            )}
           </div>
         )}
 
@@ -489,191 +824,3 @@ const Fitness: React.FC = () => {
                   <div className="flex items-center">
                     <BarChart className="w-5 h-5 mr-3 text-fitness" />
                     <span>Durée moyenne par séance</span>
-                  </div>
-                  <span className="text-xl font-bold">{stats.avgDuration} min</span>
-                </div>
-              </div>
-              
-              <div className="mt-6 text-center">
-                <p className="text-foreground/70 text-sm">
-                  Continuez à enregistrer vos séances pour voir votre progression !
-                </p>
-              </div>
-            </GlassCard>
-            
-            {/* Historique des activités */}
-            <GlassCard intensity="light" className="p-6 col-span-1 md:row-span-1">
-              <h3 className="text-xl font-semibold mb-4">Historique récent</h3>
-              
-              {activities.length === 0 ? (
-                <div className="text-center py-8 text-foreground/70">
-                  <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>Aucune séance enregistrée</p>
-                  <p className="text-sm mt-2">Commencez à ajouter vos séances d'entraînement</p>
-                </div>
-              ) : (
-                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                  {activities.slice(0, 5).map((activity) => (
-                    <div key={activity.id} className="flex items-start justify-between p-3 bg-background/50 rounded-lg border border-border/50">
-                      <div>
-                        <div className="flex items-center">
-                          <span className="font-medium">{activity.type}</span>
-                          <span className="mx-2 text-foreground/50">•</span>
-                          <span className="text-sm text-foreground/70">{new Date(activity.date).toLocaleDateString()}</span>
-                        </div>
-                        <div className="mt-1 flex items-center text-sm text-foreground/70">
-                          <Timer className="w-3 h-3 mr-1" />
-                          <span>{activity.duration} min</span>
-                          <span className="mx-2">•</span>
-                          <span>Intensité: {activity.intensity}</span>
-                        </div>
-                        {activity.notes && (
-                          <p className="mt-2 text-sm text-foreground/70 italic line-clamp-2">{activity.notes}</p>
-                        )}
-                      </div>
-                      <button 
-                        onClick={() => handleDeleteActivity(activity.id)}
-                        className="text-destructive/70 hover:text-destructive p-1"
-                        aria-label="Supprimer cette activité"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                  
-                  {activities.length > 5 && (
-                    <p className="text-center text-sm text-foreground/70 pt-2">
-                      +{activities.length - 5} autres séances
-                    </p>
-                  )}
-                </div>
-              )}
-            </GlassCard>
-          </div>
-        </div>
-
-        <div className="mb-12">
-          <h2 className="text-2xl font-semibold mb-6">Exemples de programmes</h2>
-          
-          <Tabs defaultValue="beginner" className="w-full" onValueChange={setCurrentLevel}>
-            <TabsList className="grid grid-cols-3 mb-8">
-              <TabsTrigger value="beginner">Débutant</TabsTrigger>
-              <TabsTrigger value="intermediate">Intermédiaire</TabsTrigger>
-              <TabsTrigger value="advanced">Avancé</TabsTrigger>
-            </TabsList>
-            
-            {['beginner', 'intermediate', 'advanced'].map((level) => (
-              <TabsContent key={level} value={level} className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  {workoutPlans[level as keyof typeof workoutPlans].map((workout, index) => (
-                    <GlassCard key={index} className="p-6 hover-lift">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="p-2 bg-fitness/10 rounded-full">
-                          <Dumbbell className="w-6 h-6 text-fitness" />
-                        </div>
-                        <div className="flex items-center text-sm text-foreground/70">
-                          <Timer className="w-4 h-4 mr-1" />
-                          <span>{workout.duration}</span>
-                        </div>
-                      </div>
-                      
-                      <h3 className="text-xl font-medium mb-2">{workout.title}</h3>
-                      <p className="text-foreground/70 mb-4">{workout.description}</p>
-                      
-                      <div className="flex gap-3 mb-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-foreground/70">
-                          {workout.focus}
-                        </span>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-foreground/70">
-                          Intensité: {workout.intensity}
-                        </span>
-                      </div>
-                      
-                      <div className="mt-4">
-                        <h4 className="font-medium mb-2">Exercices:</h4>
-                        <ul className="space-y-2">
-                          {workout.exercises.map((exercise, idx) => (
-                            <li key={idx} className="flex justify-between text-sm border-b border-border/50 pb-2 last:border-0">
-                              <span>{exercise.name}</span>
-                              <span className="text-foreground/70">{exercise.reps}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </GlassCard>
-                  ))}
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </div>
-        
-        <div className="mb-16">
-          <h2 className="text-2xl font-semibold mb-6">Votre progression</h2>
-          <GlassCard className="p-8">
-            <div className="grid md:grid-cols-4 gap-6">
-              {progressSteps.map((step, i) => (
-                <div key={i} className="relative">
-                  <div className="flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-fitness text-white mb-4">
-                      {i + 1}
-                    </div>
-                    <h3 className="text-lg font-medium mb-2">{step.week}</h3>
-                    <div className="text-sm font-medium text-fitness mb-1">{step.focus}</div>
-                    <p className="text-sm text-center text-foreground/70">{step.description}</p>
-                  </div>
-                  
-                  {i < progressSteps.length - 1 && (
-                    <div className="hidden md:block absolute top-6 left-full w-full h-0.5 bg-border transform -translate-x-6">
-                      <ArrowRight className="absolute right-0 -top-2 text-border w-4 h-4" />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </GlassCard>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          <GlassCard className="p-6 hover-lift">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-fitness/10 mb-4">
-                <Heart className="w-6 h-6 text-fitness" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">Adapté à vos besoins</h3>
-              <p className="text-foreground/70">
-                Programmes qui évoluent selon votre niveau et vos progrès.
-              </p>
-            </div>
-          </GlassCard>
-          
-          <GlassCard className="p-6 hover-lift">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-fitness/10 mb-4">
-                <Activity className="w-6 h-6 text-fitness" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">Efficacité prouvée</h3>
-              <p className="text-foreground/70">
-                Exercices sélectionnés pour des résultats optimaux en fonction de vos objectifs.
-              </p>
-            </div>
-          </GlassCard>
-          
-          <GlassCard className="p-6 hover-lift">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-fitness/10 mb-4">
-                <Award className="w-6 h-6 text-fitness" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">Suivi des progrès</h3>
-              <p className="text-foreground/70">
-                Visualisez vos avancées et célébrez chaque étape de votre transformation.
-              </p>
-            </div>
-          </GlassCard>
-        </div>
-      </main>
-    </motion.div>
-  );
-};
-
-export default Fitness;
