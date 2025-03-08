@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { ClerkLoaded, ClerkLoading, SignedIn, SignedOut } from "@clerk/clerk-react";
+import { ClerkLoaded, ClerkLoading } from "@clerk/clerk-react";
 import { Loader2 } from 'lucide-react';
 import Index from "./pages/Index";
 import Profile from "./pages/Profile";
