@@ -1,11 +1,22 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
+import Header from '@/components/layout/Header';
 import Hero from '@/components/home/Hero';
 import Features from '@/components/home/Features';
-import Header from '@/components/layout/Header';
+import { Button } from '@/components/ui/button';
+import { LogIn } from 'lucide-react';
 
 const Index: React.FC = () => {
+  const { isSignedIn } = useAuth();
+  const navigate = useNavigate();
+
+  const handleAuthAction = () => {
+    navigate('/auth');
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -15,33 +26,26 @@ const Index: React.FC = () => {
     >
       <Header />
       <main>
-        <Hero />
-        <Features />
-        
-        {/* Appel à l'action */}
-        <section className="py-20 px-4 text-center bg-primary/5">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-6">Prêt à transformer votre vie ?</h2>
-            <p className="text-xl mb-8">
-              Commencez dès aujourd'hui votre parcours vers une meilleure santé avec FitNourish.
-            </p>
-            <a
-              href="/profile"
-              className="inline-block px-8 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors"
-            >
-              Créer mon profil
-            </a>
-          </div>
+        <section id="hero" className="py-20 md:py-32">
+          <Hero />
+          
+          {!isSignedIn && (
+            <div className="flex justify-center mt-8">
+              <Button 
+                size="lg" 
+                onClick={handleAuthAction}
+                className="animate-pulse"
+              >
+                <LogIn className="mr-2 h-5 w-5" />
+                Créer un compte pour commencer
+              </Button>
+            </div>
+          )}
         </section>
         
-        {/* Pied de page */}
-        <footer className="py-12 px-4 bg-secondary/30">
-          <div className="max-w-7xl mx-auto text-center">
-            <p className="text-sm text-foreground/60">
-              © {new Date().getFullYear()} FitNourish. Tous droits réservés.
-            </p>
-          </div>
-        </footer>
+        <section id="features" className="py-20 bg-muted/30">
+          <Features />
+        </section>
       </main>
     </motion.div>
   );
