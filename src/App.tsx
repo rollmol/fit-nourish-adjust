@@ -22,7 +22,7 @@ const AnimatedRoutes = () => {
   const location = useLocation();
   
   return (
-    <AnimatePresence mode="wait">
+    <>
       <ClerkLoading>
         <div className="h-screen flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -30,32 +30,34 @@ const AnimatedRoutes = () => {
       </ClerkLoading>
       
       <ClerkLoaded>
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/auth/sso-callback" element={<OAuthCallback />} />
-          
-          {/* Routes protégées */}
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          } />
-          <Route path="/nutrition" element={
-            <ProtectedRoute>
-              <Nutrition />
-            </ProtectedRoute>
-          } />
-          <Route path="/fitness" element={
-            <ProtectedRoute>
-              <Fitness />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/sso-callback" element={<OAuthCallback />} />
+            
+            {/* Routes protégées */}
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/nutrition" element={
+              <ProtectedRoute>
+                <Nutrition />
+              </ProtectedRoute>
+            } />
+            <Route path="/fitness" element={
+              <ProtectedRoute>
+                <Fitness />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AnimatePresence>
       </ClerkLoaded>
-    </AnimatePresence>
+    </>
   );
 };
 
