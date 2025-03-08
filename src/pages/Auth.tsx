@@ -1,21 +1,30 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { SignIn, SignUp, useAuth } from '@clerk/clerk-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import GlassCard from '@/components/ui/GlassCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Auth: React.FC = () => {
   const { isLoaded, isSignedIn } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Récupérer le paramètre d'onglet des paramètres de recherche
+  const searchParams = new URLSearchParams(location.search);
+  const tabParam = searchParams.get('tab');
+  const defaultTab = tabParam === 'signup' ? 'signup' : 'signin';
+  
+  // Récupérer l'URL de redirection de l'état de localisation (si disponible)
+  const redirectTo = location.state?.from?.pathname || '/';
   
   // Rediriger vers la page d'accueil si déjà connecté
-  React.useEffect(() => {
+  useEffect(() => {
     if (isLoaded && isSignedIn) {
-      navigate('/');
+      navigate(redirectTo);
     }
-  }, [isLoaded, isSignedIn, navigate]);
+  }, [isLoaded, isSignedIn, navigate, redirectTo]);
 
   return (
     <motion.div
@@ -33,7 +42,7 @@ const Auth: React.FC = () => {
         </div>
         
         <GlassCard>
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="grid grid-cols-2 mb-6">
               <TabsTrigger value="signin">Connexion</TabsTrigger>
               <TabsTrigger value="signup">Inscription</TabsTrigger>
@@ -44,6 +53,8 @@ const Auth: React.FC = () => {
                 routing="path" 
                 path="/auth"
                 signUpUrl="/auth?tab=signup"
+                redirectUrl={redirectTo}
+                afterSignInUrl={redirectTo}
                 appearance={{
                   elements: {
                     card: "shadow-none bg-transparent",
@@ -63,6 +74,8 @@ const Auth: React.FC = () => {
                 routing="path" 
                 path="/auth"
                 signInUrl="/auth?tab=signin"
+                redirectUrl={redirectTo}
+                afterSignUpUrl={redirectTo}
                 appearance={{
                   elements: {
                     card: "shadow-none bg-transparent",

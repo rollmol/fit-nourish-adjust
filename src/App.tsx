@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { ClerkLoaded, ClerkLoading } from "@clerk/clerk-react";
+import { ClerkLoaded, ClerkLoading } from '@clerk/clerk-react';
 import { Loader2 } from 'lucide-react';
 import Index from "./pages/Index";
 import Profile from "./pages/Profile";
@@ -13,6 +13,7 @@ import Nutrition from "./pages/Nutrition";
 import Fitness from "./pages/Fitness";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import OAuthCallback from "./pages/OAuthCallback";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const AnimatedRoutes = () => {
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/sso-callback" element={<OAuthCallback />} />
           
           {/* Routes protégées */}
           <Route path="/profile" element={
