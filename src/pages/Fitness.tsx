@@ -1,4 +1,4 @@
-<lov-code>
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Dumbbell, Timer, Activity, Heart, Award, ArrowRight, Calendar, PlusCircle, Trash2, BarChart, Edit, Save, Check, X, List, CheckSquare } from 'lucide-react';
@@ -824,3 +824,72 @@ const Fitness: React.FC = () => {
                   <div className="flex items-center">
                     <BarChart className="w-5 h-5 mr-3 text-fitness" />
                     <span>Durée moyenne par séance</span>
+                  </div>
+                  <span className="text-xl font-bold">{stats.avgDuration} min</span>
+                </div>
+              </div>
+            </GlassCard>
+            
+            {/* Liste des activités récentes */}
+            <GlassCard intensity="light" className="p-6 col-span-1">
+              <h3 className="text-xl font-semibold mb-4">Historique récent</h3>
+              
+              {activities.length > 0 ? (
+                <div className="space-y-3">
+                  {activities.slice(0, 5).map((activity) => (
+                    <div 
+                      key={activity.id} 
+                      className="p-3 bg-background/50 rounded-lg border border-border/30 flex justify-between items-start"
+                    >
+                      <div>
+                        <div className="flex items-center">
+                          <span className="font-medium">{activity.type}</span>
+                          <span className="text-xs ml-2 px-2 py-0.5 rounded bg-fitness/10 text-fitness">
+                            {activity.intensity}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-sm text-foreground/70 mt-1">
+                          <Calendar className="w-3.5 h-3.5 mr-1" />
+                          <span>{new Date(activity.date).toLocaleDateString()}</span>
+                          <Timer className="w-3.5 h-3.5 mx-1 ml-2" />
+                          <span>{activity.duration} min</span>
+                        </div>
+                        {activity.notes && (
+                          <p className="text-xs text-foreground/70 mt-1 line-clamp-1">
+                            {activity.notes}
+                          </p>
+                        )}
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteActivity(activity.id)}
+                        className="text-foreground/40 hover:text-red-500 transition-colors p-1"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {activities.length > 5 && (
+                    <Button variant="ghost" className="w-full text-sm">
+                      Voir toutes les séances ({activities.length})
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center p-6 border border-dashed border-border rounded-lg">
+                  <Activity className="w-8 h-8 text-foreground/30 mx-auto mb-2" />
+                  <p className="text-foreground/50">Aucune activité enregistrée</p>
+                  <p className="text-sm text-foreground/40 mt-1">
+                    Ajoutez votre première séance d'entraînement
+                  </p>
+                </div>
+              )}
+            </GlassCard>
+          </div>
+        </div>
+      </main>
+    </motion.div>
+  );
+};
+
+export default Fitness;
