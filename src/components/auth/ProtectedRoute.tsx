@@ -20,8 +20,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!isSignedIn) {
-    // Rediriger vers la page d'authentification, en mémorisant la page demandée
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    // Stocker l'URL actuelle pour pouvoir rediriger après connexion
+    const redirectUrl = encodeURIComponent(location.pathname);
+    // Rediriger vers la page d'authentification
+    return <Navigate to={`/auth?redirect_url=${redirectUrl}`} state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

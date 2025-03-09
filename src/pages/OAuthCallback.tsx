@@ -36,12 +36,10 @@ const OAuthCallback: React.FC = () => {
         description: "Vous êtes maintenant connecté",
       });
       
-      // Utiliser setTimeout pour s'assurer que l'état est mis à jour avant la redirection
-      setTimeout(() => {
-        navigate(redirectUrl, { replace: true });
-      }, 100);
+      // Redirection directe en utilisant window.location pour éviter les problèmes avec React Router
+      window.location.href = redirectUrl;
     }
-  }, [isLoaded, isSignedIn, location, navigate, processed]);
+  }, [isLoaded, isSignedIn, location, processed]);
   
   return (
     <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-secondary/30">

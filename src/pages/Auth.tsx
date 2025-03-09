@@ -17,12 +17,13 @@ const Auth: React.FC = () => {
   const defaultTab = tabParam === 'signup' ? 'signup' : 'signin';
   
   // Récupérer l'URL de redirection de l'état de localisation (si disponible)
-  const redirectTo = location.state?.from?.pathname || '/';
+  const redirectTo = location.state?.from?.pathname || '/profile';
   
   // Rediriger vers la page d'accueil si déjà connecté
   useEffect(() => {
     if (isLoaded && isSignedIn) {
-      navigate(redirectTo);
+      console.log("Déjà connecté, redirection vers:", redirectTo);
+      navigate(redirectTo, { replace: true });
     }
   }, [isLoaded, isSignedIn, navigate, redirectTo]);
 
@@ -50,7 +51,7 @@ const Auth: React.FC = () => {
             
             <TabsContent value="signin" className="p-4">
               <SignIn 
-                routing="path" 
+                routing="hash" 
                 path="/auth"
                 signUpUrl="/auth?tab=signup"
                 redirectUrl={redirectTo}
@@ -71,7 +72,7 @@ const Auth: React.FC = () => {
             
             <TabsContent value="signup" className="p-4">
               <SignUp 
-                routing="path" 
+                routing="hash" 
                 path="/auth"
                 signInUrl="/auth?tab=signin"
                 redirectUrl={redirectTo}
