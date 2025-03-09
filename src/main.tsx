@@ -20,6 +20,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       afterSignUpUrl="/profile"
       signInUrl="/auth?tab=signin"
       signUpUrl="/auth?tab=signup"
+      navigationFallbackEnabled={true}
+      navigate={(to) => window.location.href = to}
     >
       <App />
     </ClerkProvider>
