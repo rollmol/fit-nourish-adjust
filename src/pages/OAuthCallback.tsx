@@ -9,32 +9,39 @@ const OAuthCallback: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoaded, isSignedIn } = useAuth();
-  const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const [processed, setProcessed] = useState(false);
   
   useEffect(() => {
+    // Ne rien faire tant que Clerk n'est pas chargé
     if (!isLoaded) return;
     
-    // Éviter les redirections multiples
-    if (redirectAttempted) return;
+    // Éviter les traitements multiples
+    if (processed) return;
     
-    // Une fois l'authentification vérifiée
+    console.log("État de l'authentification:", { isLoaded, isSignedIn });
+    
     if (isSignedIn) {
-      setRedirectAttempted(true);
+      // Marquer comme traité immédiatement pour éviter les doubles redirections
+      setProcessed(true);
       
       // Extraire l'URL de redirection des paramètres de requête si elle existe
       const params = new URLSearchParams(location.search);
       const redirectUrl = params.get('redirect_url') || '/profile';
       
       console.log("Authentification réussie, redirection vers:", redirectUrl);
+      
+      // Notification de succès
       toast({
         title: "Authentification réussie",
         description: "Vous êtes maintenant connecté",
       });
       
-      // Redirection immédiate avec replace pour éviter les problèmes d'historique
-      navigate(redirectUrl, { replace: true });
+      // Utiliser setTimeout pour s'assurer que l'état est mis à jour avant la redirection
+      setTimeout(() => {
+        navigate(redirectUrl, { replace: true });
+      }, 100);
     }
-  }, [isLoaded, isSignedIn, location, navigate, redirectAttempted]);
+  }, [isLoaded, isSignedIn, location, navigate, processed]);
   
   return (
     <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-secondary/30">

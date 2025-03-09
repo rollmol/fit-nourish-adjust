@@ -20,7 +20,15 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       afterSignUpUrl="/profile"
       signInUrl="/auth?tab=signin"
       signUpUrl="/auth?tab=signup"
-      navigate={(to) => window.location.href = to}
+      navigate={(to) => {
+        // Utiliser une fonction de navigation personnalisée pour rediriger l'utilisateur
+        // et éviter une boucle infinie entre Clerk et notre application
+        console.log("Navigation Clerk vers:", to);
+        // Utiliser une redirection directe au lieu de la navigation React Router
+        // pour les redirections après auth
+        window.location.href = to;
+        return to;
+      }}
     >
       <App />
     </ClerkProvider>
