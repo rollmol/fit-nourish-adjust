@@ -27,6 +27,21 @@ export interface Workout {
   calories: number;
 }
 
+export type ExerciseMetricType = 'weightAndReps' | 'repsOnly' | 'durationOnly' | 'distanceAndDuration';
+
+export interface Exercise {
+  id: string;
+  name: string;
+  description: string;
+  duration: number; // en minutes
+  level: 'beginner' | 'intermediate' | 'advanced';
+  equipment: string[];
+  muscleGroups: string[];
+  calories: number;
+  image?: string;
+  metricType: ExerciseMetricType; // Nouvelle propriété
+}
+
 interface WorkoutCardProps {
   workout: Workout;
   isSelected?: boolean;

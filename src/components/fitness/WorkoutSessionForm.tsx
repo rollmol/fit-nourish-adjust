@@ -17,13 +17,31 @@ const WorkoutSessionForm: React.FC<WorkoutSessionFormProps> = ({ exercise, onCom
   const [repetitions, setRepetitions] = useState('');
   const [weight, setWeight] = useState('');
   const [duration, setDuration] = useState('');
+  const [distance, setDistance] = useState('');
   const [notes, setNotes] = useState('');
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation basique
-    if (!repetitions && !weight && !duration) {
+    // Validation basique selon le type d'exercice
+    let isValid = false;
+    
+    switch (exercise.metricType) {
+      case 'weightAndReps':
+        isValid = !!repetitions || !!weight;
+        break;
+      case 'repsOnly':
+        isValid = !!repetitions;
+        break;
+      case 'durationOnly':
+        isValid = !!duration;
+        break;
+      case 'distanceAndDuration':
+        isValid = !!distance || !!duration;
+        break;
+    }
+    
+    if (!isValid) {
       toast({
         title: "Informations manquantes",
         description: "Veuillez saisir au moins une information sur votre performance.",
@@ -39,6 +57,7 @@ const WorkoutSessionForm: React.FC<WorkoutSessionFormProps> = ({ exercise, onCom
       repetitions: repetitions ? parseInt(repetitions) : null,
       weight: weight ? parseInt(weight) : null,
       duration: duration ? parseInt(duration) : null,
+      distance: distance ? parseInt(distance) : null,
       notes,
       date: new Date()
     });
@@ -58,38 +77,61 @@ const WorkoutSessionForm: React.FC<WorkoutSessionFormProps> = ({ exercise, onCom
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <Label htmlFor="repetitions">Répétitions</Label>
-            <Input
-              id="repetitions"
-              type="number"
-              value={repetitions}
-              onChange={(e) => setRepetitions(e.target.value)}
-              placeholder="Nombre de répétitions"
-            />
-          </div>
+          {/* Afficher le champ de répétitions pour les exercices concernés */}
+          {(exercise.metricType === 'weightAndReps' || exercise.metricType === 'repsOnly') && (
+            <div>
+              <Label htmlFor="repetitions">Répétitions</Label>
+              <Input
+                id="repetitions"
+                type="number"
+                value={repetitions}
+                onChange={(e) => setRepetitions(e.target.value)}
+                placeholder="Nombre de répétitions"
+              />
+            </div>
+          )}
           
-          <div>
-            <Label htmlFor="weight">Poids (kg)</Label>
-            <Input
-              id="weight"
-              type="number"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              placeholder="Poids utilisé"
-            />
-          </div>
+          {/* Afficher le champ de poids uniquement pour les exercices avec poids */}
+          {exercise.metricType === 'weightAndReps' && (
+            <div>
+              <Label htmlFor="weight">Poids (kg)</Label>
+              <Input
+                id="weight"
+                type="number"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                placeholder="Poids utilisé"
+              />
+            </div>
+          )}
           
-          <div>
-            <Label htmlFor="duration">Durée (min)</Label>
-            <Input
-              id="duration"
-              type="number"
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-              placeholder="Temps en minutes"
-            />
-          </div>
+          {/* Afficher le champ de durée pour les exercices concernés */}
+          {(exercise.metricType === 'durationOnly' || exercise.metricType === 'distanceAndDuration') && (
+            <div>
+              <Label htmlFor="duration">Durée (min)</Label>
+              <Input
+                id="duration"
+                type="number"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="Temps en minutes"
+              />
+            </div>
+          )}
+          
+          {/* Afficher le champ de distance pour les exercices concernés */}
+          {exercise.metricType === 'distanceAndDuration' && (
+            <div>
+              <Label htmlFor="distance">Distance (m)</Label>
+              <Input
+                id="distance"
+                type="number"
+                value={distance}
+                onChange={(e) => setDistance(e.target.value)}
+                placeholder="Distance en mètres"
+              />
+            </div>
+          )}
         </div>
         
         <div>
